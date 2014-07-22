@@ -1,15 +1,34 @@
 ;Simple AHK script to genereate button clicks for screen elements that are missing key board mappings
 ; IMPORTANT: The click positions should be edited for the given console.  They are likely not correct. (Read: guaranteed)
 
-
 ;CAM
-F11::Click 158, 570 
+F11::
+MouseGetPos, xpos, ypos
+SetDefaultMouseSpeed 0
+Click 158, 570
+MouseMove xpos, ypos
+return
 
 ;Default View
-^,::Click 158, 570  
+^,::
+MouseGetPos, xpos, ypos
+SetDefaultMouseSpeed 0
+Click 158, 570
+MouseMove xpos, ypos
+return
 
 ; LRS View
-^.::Click 158, 570
+^.::
+MouseGetPos, xpos, ypos
+SetDefaultMouseSpeed 0
+Click 158, 570
+MouseMove xpos, ypos
+return
 
 ; Visualization
-^/::Click 159, 695
+^/::
+MouseGetPos, xpos, ypos
+SetDefaultMouseSpeed 0
+Click 159, 695
+MouseMove xpos, ypos
+return
