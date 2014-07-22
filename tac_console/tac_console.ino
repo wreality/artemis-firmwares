@@ -40,9 +40,9 @@ const uint8_t keys[24][4] = {
   { 0              , 0x4f, 0x00, 0xFF}, // Incr Freq
   { 0              , 0x17, 0x00, 0xFF}, // Zoom In
   { 0              , 0x1C, 0x00, 0xFF}, // Zoom Out
-  { 0              , 0x36, 0x00, 0xFF}, // Weapons View
-  { 0              , 0x37, 0x00, 0xFF}, // LRS View Button
-  { 0              , 0x38, 0x00, 0xFF}, // Visual View Button
+  { KEY_LEFT_CTRL  , 0x36, 0x00, 0xFF}, // Helm View
+  { KEY_LEFT_CTRL  , 0x37, 0x00, 0xFF}, // LRS View Button
+  { KEY_LEFT_CTRL  , 0x38, 0x00, 0xFF}, // Visual View Button
   { KEY_RIGHT_SHIFT, 0x18, 0x00, 0xFF}, // Torp to ENE
   { KEY_RIGHT_SHIFT, 0x0c, 0x00, 0xFF}, // ENE to Torp
   { 0              , 0x1e, 0x00, 0xFF}, // Homing
