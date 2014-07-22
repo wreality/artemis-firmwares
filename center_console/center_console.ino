@@ -26,27 +26,32 @@
 #define KEY_LEFT_SHIFT	0x02
 #define KEY_RIGHT_CTRL	0x10
 #define KEY_RIGHT_SHIFT	0x20
+
+const uint8_t elec_registers[12] = {
+  0x41, 0x43, 0x45, 0x47, 0x49, 0x4B, 0x4D, 0x4F, 0x51, 0x53, 0x55, 0x57 };
+  
 uint8_t buf[8] = { 0 };
-uint8_t keys[10][2] = { 
-  { 0, 0x3B}, // Front View Button
-  { 0, 0x3C}, // Left View Button
-  { 0, 0x3D}, // //Right View Button
-  { 0, 0x3E}, // Rear View Button
-  { 0, 0x44}, // Camera View Button
-  { 0, 0x3F}, // Tactical View Button
-  { 0, 0x40}, // LRS View Button
-  { 0, 0x41}, // Info View Button
-  { 0, 0x0E}, // Raise Shild Button
-  { 0, 0x0F} // Lower Sheid Button
+
+//Configuration format: KeyModifier, KeyCode, TouchThreshold, ReleaseThreshold
+const uint8_t keys[10][4] = { 
+  { 0, 0x3B, 0x00, 0xFF}, // Front View Button
+  { 0, 0x3C, 0x00, 0xFF}, // Left View Button
+  { 0, 0x3D, 0x00, 0xFF}, // //Right View Button
+  { 0, 0x3E, 0x00, 0xFF}, // Rear View Button
+  { 0, 0x44, 0x00, 0xFF}, // Camera View Button
+  { 0, 0x3F, 0x00, 0xFF}, // Tactical View Button
+  { 0, 0x40, 0x00, 0xFF}, // LRS View Button
+  { 0, 0x41, 0x00, 0xFF}, // Info View Button
+  { 0, 0x0E, 0x00, 0xFF}, // Raise Shild Button
+  { 0, 0x0F, 0x00, 0xFF} // Lower Sheid Button
 };
 
 
 int irqpin = 2;  // Digital 2
-boolean touchStates[12]; //to keep track of the previous touch states
+boolean touchStates[10]; //to keep track of the previous touch states
 
 void setup(){
-  pinMode(irqpin, INPUT);
-  digitalWrite(irqpin, HIGH); //enable pullup resistor
+  pinMode(irqpin, INPUT_PULLUP);
   
   Serial.begin(9600);
   Wire.begin();
@@ -111,45 +116,9 @@ void mpr121_setup(void){
   set_register(0x5A, NCL_F, 0xFF);
   set_register(0x5A, FDL_F, 0x02);
   
-  //Front View Button
-  set_register(0x5A, ELE0_T, TOU_THRESH);
-  set_register(0x5A, ELE0_R, REL_THRESH);
- 
-  //Left View Button
-  set_register(0x5A, ELE1_T, TOU_THRESH);
-  set_register(0x5A, ELE1_R, REL_THRESH);
-  
-  //Right View Button
-  set_register(0x5A, ELE2_T, TOU_THRESH);
-  set_register(0x5A, ELE2_R, REL_THRESH);
-  
-  //Rear View Button
-  set_register(0x5A, ELE3_T, TOU_THRESH);
-  set_register(0x5A, ELE3_R, REL_THRESH);
-  
-  //Cam Button
-  set_register(0x5A, ELE4_T, TOU_THRESH);
-  set_register(0x5A, ELE4_R, REL_THRESH);
-  
-  //Tac Button
-  set_register(0x5A, ELE5_T, TOU_THRESH);
-  set_register(0x5A, ELE5_R, REL_THRESH);
-  
-  //LRS Button
-  set_register(0x5A, ELE6_T, TOU_THRESH);
-  set_register(0x5A, ELE6_R, REL_THRESH);
-  
-  //Info Button
-  set_register(0x5A, ELE7_T, TOU_THRESH);
-  set_register(0x5A, ELE7_R, REL_THRESH);
- 
-  //Raise Shield Button
-  set_register(0x5A, ELE8_T, TOU_THRESH);
-  set_register(0x5A, ELE8_R, REL_THRESH);
- 
-  //Lower Shield Button
-  set_register(0x5A, ELE9_T, TOU_THRESH);
-  set_register(0x5A, ELE9_R, REL_THRESH);
+  for (int i = 0; i<10; i++) {
+    setTouchValues(0x5A, i, keys[i][2], keys[i][3]);
+  }
   
   // Section D
   // Set the Filter Configuration
@@ -160,8 +129,22 @@ void mpr121_setup(void){
   // Electrode Configuration
   // Set ELE_CFG to 0x00 to return to standby mode
   set_register(0x5A, ELE_CFG, 0x0A);  // Enables 10 inputs
+  
+  set_register(0x5A, ATO_CFG0, 0x0B);
+  set_register(0x5A, ATO_CFGU, 0xC9);  // USL = (Vdd-0.7)/vdd*256 = 0xC9 @3.3V   
+  set_register(0x5A, ATO_CFGL, 0x82);  // LSL = 0.65*USL = 0x82 @3.3V
+  set_register(0x5A, ATO_CFGT, 0xB5);  // Target = 0.9*USL = 0xB5 @3.3V
+  
+  set_register(0x5A, ELE_CFG, 0x0A);  // Enables 10 inputs
+
 }
 
+void setTouchValues(uint8_t address, uint8_t electrode, uint8_t touch_thresh, uint8_t release_thresh) {
+  if (touch_thresh == 0x00) { touch_thresh = TOU_THRESH; }
+  if (release_thresh == 0xFF) { release_thresh = REL_THRESH; }
+  set_register(address, elec_registers[electrode], touch_thresh);
+  set_register(address, elec_registers[electrode]+0x01, release_thresh); 
+}
 
 boolean checkInterrupt(void){
   return digitalRead(irqpin);

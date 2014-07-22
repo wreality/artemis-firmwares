@@ -26,20 +26,26 @@
 #define KEY_LEFT_SHIFT	0x02
 #define KEY_RIGHT_CTRL	0x10
 #define KEY_RIGHT_SHIFT	0x20
+
 uint8_t buf[8] = { 0 };
-uint8_t keys[12][2] = { 
-  { 0, 0x2C}, // All Stop Button
-  { 0, 0x29}, // Reverse Button
-  { 0, 0x15}, // Request Dock
-  { 0, 0x17}, // Zoom In
-  { 0, 0x1C}, // Zoom Out
-  { 0, 0x36}, // Helm View
-  { 0, 0x37}, // LRS View Button
-  { 0, 0x38}, // Visual View Button
-  { 0, 0x1E}, // Warp 1 Button
-  { 0, 0x1F}, // Warp 2 Button
-  { 0, 0x20}, // Warp 3 Button
-  { 0, 0x21} // Warp 4 Button
+
+const uint8_t elec_registers[12] = {
+  0x41, 0x43, 0x45, 0x47, 0x49, 0x4B, 0x4D, 0x4F, 0x51, 0x53, 0x55, 0x57 };
+
+//Configuration format: KeyModifier, KeyCode, TouchThreshold, ReleaseThreshold
+const uint8_t keys[12][4] = { 
+  { 0, 0x2C, 0x00, 0xFF}, // All Stop Button
+  { 0, 0x29, 0x00, 0xFF}, // Reverse Button
+  { 0, 0x15, 0x00, 0xFF}, // Request Dock
+  { 0, 0x17, 0x00, 0xFF}, // Zoom In
+  { 0, 0x1C, 0x00, 0xFF}, // Zoom Out
+  { 0, 0x36, 0x00, 0xFF}, // Helm View
+  { 0, 0x37, 0x00, 0xFF}, // LRS View Button
+  { 0, 0x38, 0x00, 0xFF}, // Visual View Button
+  { 0, 0x1E, 0x00, 0xFF}, // Warp 1 Button
+  { 0, 0x1F, 0x00, 0xFF}, // Warp 2 Button
+  { 0, 0x20, 0x00, 0xFF}, // Warp 3 Button
+  { 0, 0x21, 0x00, 0xFF} // Warp 4 Button
 };
 
 
@@ -114,55 +120,9 @@ void mpr121_setup(void){
   set_register(0x5A, NCL_F, 0xFF);
   set_register(0x5A, FDL_F, 0x02);
   
-  //All Stop Button
-  set_register(0x5A, ELE0_T, TOU_THRESH);
-  set_register(0x5A, ELE0_R, REL_THRESH);
- 
-  //Reverse Button
-  set_register(0x5A, ELE1_T, TOU_THRESH);
-  set_register(0x5A, ELE1_R, REL_THRESH);
-  
-  //Request Dock Button
-  set_register(0x5A, ELE2_T, TOU_THRESH);
-  set_register(0x5A, ELE2_R, REL_THRESH);
-  
-  //Zoom In Button
-  set_register(0x5A, ELE3_T, TOU_THRESH);
-  set_register(0x5A, ELE3_R, REL_THRESH);
-  
-  //Zoom Out Button
-  set_register(0x5A, ELE4_T, TOU_THRESH);
-  set_register(0x5A, ELE4_R, REL_THRESH);
-  
-  //Helm Button
-  set_register(0x5A, ELE5_T, TOU_THRESH);
-  set_register(0x5A, ELE5_R, REL_THRESH);
-  
-  //LRS Button
-  set_register(0x5A, ELE6_T, TOU_THRESH);
-  set_register(0x5A, ELE6_R, REL_THRESH);
-  
-  //Visual Button
-  set_register(0x5A, ELE7_T, TOU_THRESH);
-  set_register(0x5A, ELE7_R, REL_THRESH);
- 
-  //Warp 1 Shield Button
-  set_register(0x5A, ELE8_T, TOU_THRESH);
-  set_register(0x5A, ELE8_R, REL_THRESH);
- 
-  //Warp 2 Button
-  set_register(0x5A, ELE9_T, TOU_THRESH);
-  set_register(0x5A, ELE9_R, REL_THRESH);
-  
-  
-  //Warp 3 Button
-  set_register(0x5A, ELE10_T, TOU_THRESH);
-  set_register(0x5A, ELE10_R, REL_THRESH);
-  
-  
-  //Warp 4 Button
-  set_register(0x5A, ELE11_T, TOU_THRESH);
-  set_register(0x5A, ELE11_R, REL_THRESH);
+  for (int i = 0; i<12; i++) {
+    setTouchValues(0x5A, i, keys[i][2], keys[i][3]);
+  }
   
   // Section D
   // Set the Filter Configuration
@@ -173,6 +133,22 @@ void mpr121_setup(void){
   // Electrode Configuration
   // Set ELE_CFG to 0x00 to return to standby mode
   set_register(0x5A, ELE_CFG, 0x0C);  // Enables 12 inputs
+  
+  set_register(0x5A, ATO_CFG0, 0x0B);
+  set_register(0x5A, ATO_CFGU, 0xC9);  // USL = (Vdd-0.7)/vdd*256 = 0xC9 @3.3V   
+  set_register(0x5A, ATO_CFGL, 0x82);  // LSL = 0.65*USL = 0x82 @3.3V
+  set_register(0x5A, ATO_CFGT, 0xB5);  // Target = 0.9*USL = 0xB5 @3.3V
+  
+  set_register(0x5A, ELE_CFG, 0x0C);  // Enables 12 inputs
+  
+  
+}
+
+void setTouchValues(uint8_t address, uint8_t electrode, uint8_t touch_thresh, uint8_t release_thresh) {
+  if (touch_thresh == 0x00) { touch_thresh = TOU_THRESH; }
+  if (release_thresh == 0xFF) { release_thresh = REL_THRESH; }
+  set_register(address, elec_registers[electrode], touch_thresh);
+  set_register(address, elec_registers[electrode]+0x01, release_thresh); 
 }
 
 
